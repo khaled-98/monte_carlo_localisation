@@ -17,24 +17,28 @@ public:
     enum class ResamplingMethod{DEFAULT};
 
     ParticleFilter(const int &init_number_of_particles,
+                   const geometry_msgs::TransformStamped &initial_pose,
                    const std::shared_ptr<MeasurementModel> &measurement_model,
                    const std::shared_ptr<MotionModel> &motion_model,
                    const ResamplingMethod resampling_method=ResamplingMethod::DEFAULT);
-    void initialiseFilter(const geometry_msgs::TransformStamped &init_pose);
+    void initialiseFilter(const geometry_msgs::TransformStamped &init_pose,
+                          const int &number_of_particles);
     std::vector<Particle> getParticles() const;
     void update(const geometry_msgs::TransformStamped &prev_odom,
                 const geometry_msgs::TransformStamped &curr_odom,
                 const sensor_msgs::LaserScan &scan);
 
 private:
-    void sample(const geometry_msgs::TransformStamped &prev_odom,
-                const geometry_msgs::TransformStamped &curr_odom,
-                const sensor_msgs::LaserScan &scan);
-    void resample();
+    Particle sample(const Particle &x_t_1,
+                    const geometry_msgs::TransformStamped &prev_odom,
+                    const geometry_msgs::TransformStamped &curr_odom,
+                    const sensor_msgs::LaserScan &scan);
+    std::vector<Particle> resample(const std::vector<Particle> &x_t_bar);
+    std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar);
     
     std::shared_ptr<MeasurementModel> measurement_model_;
     std::shared_ptr<MotionModel> motion_model_;
-    std::vector<Particle> particles_t_1;
+    std::vector<Particle> particles_t_1_;
     std::vector<Particle> particles_t_;
     ResamplingMethod resampling_method_;
 };
