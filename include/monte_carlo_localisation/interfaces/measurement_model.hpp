@@ -9,7 +9,7 @@ class MeasurementModel
 {
 public:
     virtual void setMap(const nav_msgs::OccupancyGrid &map) = 0;
-    virtual double getProbability(const sensor_msgs::LaserScan &scan,
+    virtual double getProbability(const sensor_msgs::LaserScan::ConstPtr &scan,
                                   const geometry_msgs::TransformStamped &curr_pose) = 0;
 };
 

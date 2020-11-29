@@ -16,9 +16,7 @@ class ParticleFilter
 public:
     enum class ResamplingMethod{DEFAULT};
 
-    ParticleFilter(const int &init_number_of_particles,
-                   const geometry_msgs::TransformStamped &initial_pose,
-                   const std::shared_ptr<MeasurementModel> &measurement_model,
+    ParticleFilter(const std::shared_ptr<MeasurementModel> &measurement_model,
                    const std::shared_ptr<MotionModel> &motion_model,
                    const ResamplingMethod resampling_method=ResamplingMethod::DEFAULT);
     void initialiseFilter(const geometry_msgs::TransformStamped &init_pose,

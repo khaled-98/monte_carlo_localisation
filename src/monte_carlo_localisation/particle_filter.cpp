@@ -1,15 +1,13 @@
 #include "particle_filter.hpp"
 #include <random>
 
-ParticleFilter::ParticleFilter(const int &init_number_of_particles,
-                               const geometry_msgs::TransformStamped &initial_pose,
-                               const std::shared_ptr<MeasurementModel> &measurement_model,
+ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurement_model,
                                const std::shared_ptr<MotionModel> &motion_model,
-                               const ResamplingMethod resampling_method) :
+                               const ResamplingMethod resampling_method=ResamplingMethod::DEFAULT) :
                                measurement_model_(measurement_model),
-                               motion_model_(motion_model),
-                               resampling_method_(resampling_method)
+                               motion_model_(motion_model)
 {
+    // get num_of_particles, init_pose, 
     initialiseFilter(initial_pose, init_number_of_particles);
 }
 

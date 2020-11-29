@@ -2,6 +2,7 @@
 #define FE0A2F84_4CF9_4948_BCE6_E9631BB04964
 
 #include "interfaces/measurement_model.hpp"
+#include <unordered_map>
 
 /**
  * Likelihood field laser measurement model.
@@ -15,7 +16,7 @@ public:
                          const double &sigma_hit,
                          const double &z_hit,
                          const double &z_rand);
-    void setMap(const nav_msgs::OccupancyGrid::ConstPtr &map) override;
+    void setMap(const nav_msgs::OccupancyGrid &map) override;
     double getProbability(const sensor_msgs::LaserScan::ConstPtr &scan,
                           const geometry_msgs::TransformStamped &curr_pose) override;
 private:
@@ -25,7 +26,7 @@ private:
              std::vector<bool> &visited); //Deep First Search used in Likelihood field calculations.
 
 	geometry_msgs::TransformStamped laser_pose_;
-    nav_msgs::OccupancyGrid::ConstPtr map_;
+    nav_msgs::OccupancyGrid map_;
     std::unordered_map<int, double>	pre_computed_likelihood_field_;
 	int max_number_of_beams_;       // The maximum number of laser beams to use in the calculations 
 	double max_likelihood_distance_; // The distance beyond which the likelihood is 0
@@ -35,6 +36,6 @@ private:
 	double z_rand_;
 	double z_max_;
 	double z_min_;
-}
+};
 
 #endif /* FE0A2F84_4CF9_4948_BCE6_E9631BB04964 */
