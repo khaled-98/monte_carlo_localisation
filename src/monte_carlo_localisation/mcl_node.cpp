@@ -1,6 +1,6 @@
-#include "mcl_node.hpp"
+#include "monte_carlo_localisation/mcl_node.hpp"
+#include "monte_carlo_localisation/motion_utils.hpp"
 #include "nav_msgs/GetMap.h"
-#include "motion_utils.hpp"
 
 MclNode::MclNode()
 {
@@ -28,7 +28,7 @@ MclNode::MclNode()
     particle_filter_ = std::make_shared<ParticleFilter>(measurement_model_, motion_model_);    
 }
 
-nav_msgs::OccupancyGrid getMap()
+nav_msgs::OccupancyGrid MclNode::getMap()
 {
     nav_msgs::GetMap::Request req;
     nav_msgs::GetMap::Response resp;

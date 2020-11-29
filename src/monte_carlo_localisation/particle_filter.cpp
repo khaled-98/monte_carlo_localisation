@@ -1,13 +1,27 @@
-#include "particle_filter.hpp"
+#include "monte_carlo_localisation/particle_filter.hpp"
+#include "monte_carlo_localisation/motion_utils.hpp"
 #include <random>
 
 ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurement_model,
                                const std::shared_ptr<MotionModel> &motion_model,
-                               const ResamplingMethod resampling_method=ResamplingMethod::DEFAULT) :
+                               const ResamplingMethod resampling_method) :
+                               private_nh_("~"),
                                measurement_model_(measurement_model),
                                motion_model_(motion_model)
 {
-    // get num_of_particles, init_pose, 
+    double init_x, init_y, init_theta;
+    int init_number_of_particles;
+
+    private_nh_.param("initial_number_of_particles", init_number_of_particles, 5000);
+    private_nh_.param("init_x", init_x, 0.0);
+    private_nh_.param("init_y", init_x, 0.0);
+    private_nh_.param("init_theta", init_theta, 0.0);
+    
+    geometry_msgs::TransformStamped initial_pose;
+    initial_pose.transform.translation.x = init_x;
+    initial_pose.transform.translation.y = init_y;
+    initial_pose.transform.rotation = MotionUtils::getQuat(init_theta);
+
     initialiseFilter(initial_pose, init_number_of_particles);
 }
 
@@ -80,7 +94,7 @@ std::vector<Particle> ParticleFilter::resample(const std::vector<Particle> &x_t_
     }
 }
 
-std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar)
+std::vector<Particle> ParticleFilter::defaultResample(const std::vector<Particle> &x_t_bar)
 {
     // TODO: Find a more efficient way to do this
     std::vector<Particle> x_t;

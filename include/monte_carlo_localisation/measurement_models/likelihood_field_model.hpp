@@ -1,7 +1,7 @@
 #ifndef FE0A2F84_4CF9_4948_BCE6_E9631BB04964
 #define FE0A2F84_4CF9_4948_BCE6_E9631BB04964
 
-#include "interfaces/measurement_model.hpp"
+#include "monte_carlo_localisation/interfaces/measurement_model.hpp"
 #include <unordered_map>
 
 /**

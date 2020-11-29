@@ -2,6 +2,7 @@
 #define F131C896_98D6_4D16_A90D_4E1BCFDDFB2E
 
 #include "geometry_msgs/TransformStamped.h"
+#include "geometry_msgs/Quaternion.h"
 
 class MotionUtils
 {
@@ -11,6 +12,7 @@ public:
                          const geometry_msgs::TransformStamped &end,
                          const double &trans_tol,
                          const double &rot_tol);
+    static geometry_msgs::Quaternion getQuat(double yaw);
 };
 
 #endif /* F131C896_98D6_4D16_A90D_4E1BCFDDFB2E */

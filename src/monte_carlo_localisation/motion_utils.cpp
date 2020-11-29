@@ -1,4 +1,4 @@
-#include "motion_utils.hpp"
+#include "monte_carlo_localisation/motion_utils.hpp"
 #include "tf2/utils.h"
 #include <cmath>
 
@@ -37,4 +37,15 @@ bool MotionUtils::hasMoved(const geometry_msgs::TransformStamped &start,
         return true;
     else
         return false;
+}
+
+geometry_msgs::Quaternion MotionUtils::getQuat(double yaw)
+{
+    tf2::Quaternion tf_quat;
+    geometry_msgs::Quaternion geo_quat;
+
+    tf_quat.setRPY(0.0, 0.0, yaw);
+    tf2::convert(tf_quat, geo_quat);
+
+    return geo_quat;
 }

@@ -6,6 +6,7 @@
 #include "particle.hpp"
 #include "geometry_msgs/TransformStamped.h"
 #include "sensor_msgs/LaserScan.h"
+#include "ros/ros.h"
 
 /**
  * A particle filter implementatation. This is where all the Bayesian
@@ -34,6 +35,7 @@ private:
     std::vector<Particle> resample(const std::vector<Particle> &x_t_bar);
     std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar);
     
+    ros::NodeHandle private_nh_;
     std::shared_ptr<MeasurementModel> measurement_model_;
     std::shared_ptr<MotionModel> motion_model_;
     std::vector<Particle> particles_t_1_;

@@ -1,7 +1,7 @@
 #ifndef C066DDDD_C6CC_41E7_97E3_662E7B160658
 #define C066DDDD_C6CC_41E7_97E3_662E7B160658
 
-#include "interfaces/motion_model.hpp"
+#include "monte_carlo_localisation/interfaces/motion_model.hpp"
 
 /**
  * A differential drive odometry motion model

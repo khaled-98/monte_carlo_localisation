@@ -1,4 +1,4 @@
-#include "map_utils.hpp"
+#include "monte_carlo_localisation/map_utils.hpp"
 #include <cmath>
 
 int MapUtils::coordinates_to_index(const uint32_t &x, const uint32_t &y, const uint32_t &map_width)
