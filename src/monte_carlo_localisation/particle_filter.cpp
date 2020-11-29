@@ -7,14 +7,15 @@ ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurem
                                const ResamplingMethod resampling_method) :
                                private_nh_("~"),
                                measurement_model_(measurement_model),
-                               motion_model_(motion_model)
+                               motion_model_(motion_model),
+                               resampling_method_(resampling_method)
 {
     double init_x, init_y, init_theta;
     int init_number_of_particles;
 
-    private_nh_.param("initial_number_of_particles", init_number_of_particles, 5000);
-    private_nh_.param("init_x", init_x, 0.0);
-    private_nh_.param("init_y", init_x, 0.0);
+    private_nh_.param("initial_number_of_particles", init_number_of_particles, 500);
+    private_nh_.param("init_x", init_x, 1.0);
+    private_nh_.param("init_y", init_y, 1.0);
     private_nh_.param("init_theta", init_theta, 0.0);
     
     geometry_msgs::TransformStamped initial_pose;
@@ -49,8 +50,10 @@ void ParticleFilter::initialiseFilter(const geometry_msgs::TransformStamped &ini
         geometry_msgs::TransformStamped pose;
         pose.transform.translation.x = init_pose.transform.translation.x + delta_x;
         pose.transform.translation.y = init_pose.transform.translation.y + delta_y;
+        pose.transform.rotation = init_pose.transform.rotation;
         particles_t_1_.push_back(Particle(pose, 1.0));  // arbitrarily assing a weight of 1.0
     }
+    particles_t_ = particles_t_1_;
 }
 
 std::vector<Particle> ParticleFilter::getParticles() const
@@ -114,4 +117,19 @@ std::vector<Particle> ParticleFilter::defaultResample(const std::vector<Particle
     }
 
     return x_t;
+}
+
+geometry_msgs::PoseArray ParticleFilter::getPoses() const
+{
+    geometry_msgs::PoseArray poses;
+    for(auto particle : particles_t_)
+    {
+        geometry_msgs::Pose pose;
+        pose.position.x = particle.pose_.transform.translation.x;
+        pose.position.y = particle.pose_.transform.translation.y;
+        pose.position.z = particle.pose_.transform.translation.z;
+        pose.orientation = particle.pose_.transform.rotation;
+        poses.poses.push_back(pose);
+    }
+    return poses;
 }

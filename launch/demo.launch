@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="init_pos_x" default="1.0"/>
+  <arg name="init_pos_y" default="1.0"/>
+  <arg name="init_pos_z" default="0.0"/>
+  <arg name="init_pos_yaw" default="0"/>
+
+  <!-- launch world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find final_year_project)/gazebo_models/test_world.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="false"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load the youBot URDF model into the parameter server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find youbot_description)/robots/youbot_base_only.urdf.xacro" />
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" respawn="false" output="screen"
+    args="-param robot_description
+          -urdf
+          -x $(arg init_pos_x)
+          -y $(arg init_pos_y)
+          -z $(arg init_pos_z)
+          -Y $(arg init_pos_yaw)
+          -model youbot">
+  </node>
+
+  <!-- launch joint state controller -->
+  <include file="$(find youbot_gazebo_control)/launch/joint_state_controller.launch" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="100.0" />
+  </node>
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find final_year_project)/rviz/basic_config.rviz" />
+
+  <!-- ====================================================================== -->
+
+  <node name="map_server" pkg="map_server" type="map_server"
+       args="$(find final_year_project)/gazebo_models/test_map.yaml"/>
+
+  <!-- Run the Perfect Localiser -->
+  <node pkg="final_year_project" type="perfect_localiser.py" name="perfect_localiser"/>
+
+  <!-- mcl -->
+  <node pkg="monte_carlo_localisation" type="monte_carlo_localisation_node" name="monte_carlo_localisation_node" output="screen">
+    <param name="starting_x" value="1.0"/>
+    <param name="starting_y" value="1.0"/>
+    <param name="starting_theta" value="0.0"/>
+    <param name="alpha1" value="0.2"/>
+    <param name="alpha2" value="0.2"/>
+    <param name="alpha3" value="0.2"/>
+    <param name="alpha4" value="0.2"/>
+    <param name="odom_frame_id" value="odom"/>
+    <param name="base_frame_id" value="base_link"/>
+    <param name="laser_topic" value="base_scan"/>
+  </node>
+
+  <!-- for moving -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen">
+      <!-- Load common configuration files -->
+      <rosparam file="$(find final_year_project)/navigation/common/config/move_base_params.yaml" command="load" />
+      <rosparam file="$(find final_year_project)/navigation/common/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+      <rosparam file="$(find final_year_project)/navigation/common/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+      <!-- Load global navigation specific parameters -->
+      <rosparam file="$(find final_year_project)/navigation/global/config/local_costmap_params.yaml" command="load" />
+      <rosparam file="$(find final_year_project)/navigation/global/config/global_costmap_params.yaml" command="load" />
+      <rosparam file="$(find final_year_project)/navigation/common/config/base_local_planner_params.yaml" command="load" />
+  </node>
+
+</launch>

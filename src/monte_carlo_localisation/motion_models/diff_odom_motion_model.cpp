@@ -27,13 +27,14 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
     double y = prev_pose.transform.translation.y;
     double theta = tf2::getYaw(prev_pose.transform.rotation);
 
-    double delta_rot_1 = MotionUtils::angleDiff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
-    if(isnan(delta_rot_1) || isinf(delta_rot_1))	
-    {	
-        delta_rot_1 = 0.0; // TODO: consider a different value	
-    }	
+    double delta_rot_1;
+    if(hypot(x_bar_prime-x_bar, y_bar_prime-y_bar) > 0.01)
+        delta_rot_1 = MotionUtils::angleDiff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
+    else
+        delta_rot_1 = 0.0;
+
     double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);	
-    double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1);	
+    double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1); 
 
     std::random_device device_;	
     std::mt19937 generator_(device_());	
@@ -51,10 +52,8 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
     most_likely_pose.transform.translation.x = x + delta_trans_hat*cos(theta + delta_rot_1_hat);	
     most_likely_pose.transform.translation.y = y + delta_trans_hat*sin(theta + delta_rot_1_hat);	
 
-    tf2::Quaternion theta_prime_quat;	
     double theta_prime = theta + delta_rot_1_hat + delta_rot_2_hat;	
-    theta_prime_quat.setEuler(theta_prime, 0.0, 0.0);	
-    most_likely_pose.transform.rotation = tf2::toMsg(theta_prime_quat);	
+    most_likely_pose.transform.rotation = MotionUtils::getQuat(theta_prime);
 
     return most_likely_pose;
 }

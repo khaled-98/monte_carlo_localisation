@@ -22,6 +22,7 @@ private:
     void laserScanCallback(const sensor_msgs::LaserScanConstPtr &scan);
 
     ros::NodeHandle nh_, private_nh_;
+    ros::Publisher particle_cloud_pub_;
     std::shared_ptr<DiffOdomMotionModel> motion_model_;
     std::shared_ptr<LikelihoodFieldModel> measurement_model_;
     std::shared_ptr<ParticleFilter> particle_filter_;

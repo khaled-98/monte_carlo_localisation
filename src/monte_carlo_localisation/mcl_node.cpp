@@ -10,6 +10,8 @@ MclNode::MclNode()
     private_nh_.param("laser_topic", laser_topic_, std::string("base_scan"));
     private_nh_.param("linear_tol", linear_tol_, 0.1);
     private_nh_.param("angular_tol", angular_tol_, 0.087);  // ~ 5deg in rads
+
+    particle_cloud_pub_ = nh_.advertise<geometry_msgs::PoseArray>("particlecloud", 100);
     
     measurement_model_ = std::make_shared<LikelihoodFieldModel>();
     measurement_model_->setMap(getMap());    
@@ -52,16 +54,31 @@ void MclNode::laserScanCallback(const sensor_msgs::LaserScanConstPtr &scan)
     {
         ROS_INFO("Getting laser pose...");
         measurement_model_->setLaserPose(tf_buffer_->lookupTransform(base_frame_id_, scan->header.frame_id, ros::Time(0)));
+        ROS_INFO("Got laser pose!");
         laser_pose_set = true;
     }
     
     try
     {
+        static bool first_run{false};
         geometry_msgs::TransformStamped curr_odom = tf_buffer_->lookupTransform(odom_frame_id_, base_frame_id_, scan->header.stamp, ros::Duration(1.0));
+        if(!first_run)
+        {
+            // FIXME: There has to be a more elegant way to do this.
+            prev_odom_ = curr_odom;
+            first_run = true;
+        }
         if(MotionUtils::hasMoved(prev_odom_, curr_odom, linear_tol_, angular_tol_))
+        {
             particle_filter_->update(prev_odom_, curr_odom, scan);
+            prev_odom_ = curr_odom;
+        }
         
-        prev_odom_ = curr_odom;
+        geometry_msgs::PoseArray pose_array;
+        pose_array = particle_filter_->getPoses();
+        pose_array.header.frame_id = global_frame_id_;
+        pose_array.header.stamp = ros::Time::now();
+        particle_cloud_pub_.publish(pose_array);
     }
     catch(tf2::TransformException &ex)
     {

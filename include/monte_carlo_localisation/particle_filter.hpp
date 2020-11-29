@@ -5,6 +5,7 @@
 #include "interfaces/motion_model.hpp"
 #include "particle.hpp"
 #include "geometry_msgs/TransformStamped.h"
+#include "geometry_msgs/PoseArray.h"
 #include "sensor_msgs/LaserScan.h"
 #include "ros/ros.h"
 
@@ -23,6 +24,7 @@ public:
     void initialiseFilter(const geometry_msgs::TransformStamped &init_pose,
                           const int &number_of_particles);
     std::vector<Particle> getParticles() const;
+    geometry_msgs::PoseArray getPoses() const;
     void update(const geometry_msgs::TransformStamped &prev_odom,
                 const geometry_msgs::TransformStamped &curr_odom,
                 const sensor_msgs::LaserScan::ConstPtr &scan);
@@ -35,7 +37,7 @@ private:
     std::vector<Particle> resample(const std::vector<Particle> &x_t_bar);
     std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar);
     
-    ros::NodeHandle private_nh_;
+    ros::NodeHandle nh_, private_nh_;
     std::shared_ptr<MeasurementModel> measurement_model_;
     std::shared_ptr<MotionModel> motion_model_;
     std::vector<Particle> particles_t_1_;
