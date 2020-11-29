@@ -24,13 +24,13 @@ public:
     std::vector<Particle> getParticles() const;
     void update(const geometry_msgs::TransformStamped &prev_odom,
                 const geometry_msgs::TransformStamped &curr_odom,
-                const sensor_msgs::LaserScan &scan);
+                const sensor_msgs::LaserScan::ConstPtr &scan);
 
 private:
     Particle sample(const Particle &x_t_1,
                     const geometry_msgs::TransformStamped &prev_odom,
                     const geometry_msgs::TransformStamped &curr_odom,
-                    const sensor_msgs::LaserScan &scan);
+                    const sensor_msgs::LaserScan::ConstPtr &scan);
     std::vector<Particle> resample(const std::vector<Particle> &x_t_bar);
     std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar);
     

@@ -1,17 +1,15 @@
 #include "motion_models/diff_odom_motion_model.hpp"
-#include "angle_utils.hpp"
+#include "motion_utils.hpp"
 #include "tf2/utils.h"
 #include <random>
 
-DiffOdomMotionModel::DiffOdomMotionModel(const double &alpha1,
-                                         const double &alpha2,
-                                         const double &alpha3,
-                                         const double &alpha4) :
-                                         alpha1_(alpha1),
-                                         alpha2_(alpha2),
-                                         alpha3_(alpha3),
-                                         alpha4_(alpha4)
-{}
+DiffOdomMotionModel::DiffOdomMotionModel() : MotionModel("~")
+{
+    private_nh_.param("alpha1", alpha1_, 0.2);
+    private_nh_.param("alpha2", alpha2_, 0.2);
+    private_nh_.param("alpha3", alpha3_, 0.2);
+    private_nh_.param("alpha4", alpha4_, 0.2);
+}
 
 geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geometry_msgs::TransformStamped &prev_pose,
                                                                        const geometry_msgs::TransformStamped &prev_odom,
@@ -29,13 +27,13 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
     double y = prev_pose.transform.translation.y;
     double theta = tf2::getYaw(prev_pose.transform.rotation);
 
-    double delta_rot_1 = AngleUtils::angle_diff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
+    double delta_rot_1 = MotionUtils::angleDiff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
     if(isnan(delta_rot_1) || isinf(delta_rot_1))	
     {	
         delta_rot_1 = 0.0; // TODO: consider a different value	
     }	
     double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);	
-    double delta_rot_2 = AngleUtils::angle_diff(AngleUtils::angle_diff(theta_bar_prime, theta_bar), delta_rot_1);	
+    double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1);	
 
     std::random_device device_;	
     std::mt19937 generator_(device_());	

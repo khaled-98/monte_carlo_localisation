@@ -9,11 +9,7 @@
 class DiffOdomMotionModel : public MotionModel
 {
 public:
-    DiffOdomMotionModel(const double &alpha1,
-                        const double &alpha2,
-                        const double &alpha3,
-                        const double &alpha4);
-
+    DiffOdomMotionModel();
     geometry_msgs::TransformStamped getMostLikelyPose(const geometry_msgs::TransformStamped &prev_pose,
                                                       const geometry_msgs::TransformStamped &prev_odom,
                                                       const geometry_msgs::TransformStamped &curr_odom) override;

@@ -46,7 +46,7 @@ std::vector<Particle> ParticleFilter::getParticles() const
 
 void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
                             const geometry_msgs::TransformStamped &curr_odom,
-                            const sensor_msgs::LaserScan &scan)
+                            const sensor_msgs::LaserScan::ConstPtr &scan)
 {
     particles_t_.clear();   // clear current set of particles
     std::vector<Particle> particles_t_bar;
@@ -61,7 +61,7 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
 Particle ParticleFilter::sample(const Particle &x_t_1,
                                 const geometry_msgs::TransformStamped &prev_odom,
                                 const geometry_msgs::TransformStamped &curr_odom,
-                                const sensor_msgs::LaserScan &scan)
+                                const sensor_msgs::LaserScan::ConstPtr &scan)
 {
     geometry_msgs::TransformStamped most_likely_pose = motion_model_->getMostLikelyPose(x_t_1.pose_, prev_odom, curr_odom);
     double weight = measurement_model_->getProbability(scan, most_likely_pose);

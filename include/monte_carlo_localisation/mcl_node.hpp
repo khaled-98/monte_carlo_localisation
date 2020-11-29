@@ -8,8 +8,9 @@
 #include "nav_msgs/OccupancyGrid.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+#include "tf2_ros/message_filter.h"
 #include "message_filters/subscriber.h"
-
+#include "geometry_msgs/TransformStamped.h"
 
 class MclNode
 {
@@ -18,6 +19,7 @@ public:
 
 private:
     nav_msgs::OccupancyGrid getMap();
+    void laserScanCallback(const sensor_msgs::LaserScanConstPtr &scan);
 
     ros::NodeHandle nh_, private_nh_;
     std::shared_ptr<DiffOdomMotionModel> motion_model_;
@@ -32,6 +34,8 @@ private:
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
     std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::LaserScan>> laser_scan_filter_;
     std::shared_ptr<message_filters::Subscriber<sensor_msgs::LaserScan>> laser_scan_sub_;
+    geometry_msgs::TransformStamped prev_odom_;
+    double linear_tol_, angular_tol_;
 };
 
 #endif /* ACBE86F8_961A_4350_B53D_2DEAAD3CDBE7 */
