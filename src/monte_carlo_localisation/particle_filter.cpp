@@ -1,6 +1,7 @@
 #include "monte_carlo_localisation/particle_filter.hpp"
 #include "monte_carlo_localisation/motion_utils.hpp"
 #include <random>
+#include <unordered_set>
 
 ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurement_model,
                                const std::shared_ptr<MotionModel> &motion_model,
@@ -13,7 +14,7 @@ ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurem
     double init_x, init_y, init_theta;
     int init_number_of_particles;
 
-    private_nh_.param("initial_number_of_particles", init_number_of_particles, 500);
+    private_nh_.param("initial_number_of_particles", init_number_of_particles, 5000);
     private_nh_.param("init_x", init_x, 1.0);
     private_nh_.param("init_y", init_y, 1.0);
     private_nh_.param("init_theta", init_theta, 0.0);
@@ -68,8 +69,16 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
     particles_t_.clear();   // clear current set of particles
     std::vector<Particle> particles_t_bar;
 
+    double sum_of_weights {0};
     for(int i=0; i<particles_t_1_.size(); i++)
+    {
         particles_t_bar.push_back(sample(particles_t_1_[i], prev_odom, curr_odom, scan));
+        sum_of_weights += particles_t_bar.back().weight_;
+    }
+
+    // Normalise weights
+    for(auto particle : particles_t_bar)
+        particle.weight_ /= sum_of_weights;
 
     particles_t_ = resample(particles_t_bar);
     particles_t_1_ = particles_t_;
@@ -110,10 +119,15 @@ std::vector<Particle> ParticleFilter::defaultResample(const std::vector<Particle
     std::default_random_engine generator;
     std::discrete_distribution<int> weights_dist(weights.begin(), weights.end());
 
+    std::unordered_set<int> indices_to_be_added;
     for(int i=0; i<x_t_bar.size(); i++)
     {
-        int drawn_particle_index = weights_dist(generator); 
-        x_t.push_back(x_t_bar[drawn_particle_index]);
+        int drawn_particle_index = weights_dist(generator);
+        if(indices_to_be_added.find(drawn_particle_index)==indices_to_be_added.end())
+        {
+            x_t.push_back(x_t_bar[drawn_particle_index]);
+            indices_to_be_added.insert(drawn_particle_index);
+        }
     }
 
     return x_t;

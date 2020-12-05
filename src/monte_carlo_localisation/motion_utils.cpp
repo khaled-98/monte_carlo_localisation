@@ -39,7 +39,7 @@ bool MotionUtils::hasMoved(const geometry_msgs::TransformStamped &start,
         return false;
 }
 
-geometry_msgs::Quaternion MotionUtils::getQuat(double yaw)
+geometry_msgs::Quaternion MotionUtils::getQuat(const double &yaw)
 {
     tf2::Quaternion tf_quat;
     geometry_msgs::Quaternion geo_quat;
