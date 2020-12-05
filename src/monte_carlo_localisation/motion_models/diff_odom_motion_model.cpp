@@ -35,18 +35,18 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
 
     double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);	
     double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1); 
+    
+    std::random_device device;	
+    std::mt19937 generator(device());
 
-    std::random_device device_;	
-    std::mt19937 generator_(device_());	
+    std::normal_distribution<double> delta_rot_1_noise_dist(0.0, sqrt(alpha1_*pow(delta_rot_1, 2) + alpha2_*pow(delta_trans, 2)));	
+    double delta_rot_1_hat = MotionUtils::angleDiff(delta_rot_1, delta_rot_1_noise_dist(generator));
+    
+    std::normal_distribution<double> delta_trans_noise_dist(0.0, sqrt(alpha3_*pow(delta_trans, 2) + alpha4_*(pow(delta_rot_1, 2) + pow(delta_rot_2, 2))));	
+    double delta_trans_hat = delta_trans - delta_trans_noise_dist(generator);	
 
-    std::normal_distribution<double> delta_rot_1_noise_dist(0.0, sqrt(alpha1_*delta_rot_1 + alpha2_*delta_trans));	
-    double delta_rot_1_hat = delta_rot_1 - delta_rot_1_noise_dist(generator_);	
-
-    std::normal_distribution<double> delta_trans_noise_dist(0.0, sqrt(alpha3_*delta_trans + alpha4_*(delta_rot_1+delta_rot_2)));	
-    double delta_trans_hat = delta_trans - delta_trans_noise_dist(generator_);	
-
-    std::normal_distribution<double> delta_rot_2_noise_dist(0.0, sqrt(alpha1_*delta_rot_2 + alpha2_*delta_trans));	
-    double delta_rot_2_hat = delta_rot_2 - delta_rot_2_noise_dist(generator_);	
+    std::normal_distribution<double> delta_rot_2_noise_dist(0.0, sqrt(alpha1_*pow(delta_rot_2, 2) + alpha2_*pow(delta_trans, 2)));
+    double delta_rot_2_hat = MotionUtils::angleDiff(delta_rot_2, delta_rot_2_noise_dist(generator));	
 
     geometry_msgs::TransformStamped most_likely_pose;	
     most_likely_pose.transform.translation.x = x + delta_trans_hat*cos(theta + delta_rot_1_hat);	

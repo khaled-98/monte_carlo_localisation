@@ -106,30 +106,33 @@ double LikelihoodFieldModel::getProbability(const sensor_msgs::LaserScan::ConstP
                                             const geometry_msgs::TransformStamped &curr_pose)
 {
     double q = 1;
+	double theta = tf2::getYaw(curr_pose.transform.rotation);
 
 	z_max_ = scan->range_max;
 	z_min_ = scan->range_min;
 
 	// in case the user specfies more beams than is avaiable
-	int max_number_of_beams = std::min(max_number_of_beams, static_cast<int>(scan->ranges.size()));
-	for(int i=0; i<max_number_of_beams; i++)
+	int max_number_of_beams = std::min(max_number_of_beams_, static_cast<int>(scan->ranges.size()));
+	int beams_to_skip = static_cast<int>(scan->ranges.size())/max_number_of_beams;
+	for(int i=0; i<max_number_of_beams; i+=beams_to_skip)
 	{
-		if(scan->ranges[i]<z_max_ || scan->ranges[i]>z_min_) // within sensor range
+		if(scan->ranges[i]<z_max_ && scan->ranges[i]>z_min_) // within sensor range
 		{
+			double beam_angle = scan->angle_min + scan->angle_increment*i;
 			double x_z_kt = curr_pose.transform.translation.x +
-							laser_pose_.transform.translation.x * cos(tf2::getYaw(curr_pose.transform.rotation)) -
-							laser_pose_.transform.translation.y * sin(tf2::getYaw(curr_pose.transform.rotation)) +
+							laser_pose_.transform.translation.x * cos(theta) -
+							laser_pose_.transform.translation.y * sin(theta) +
 							scan->ranges[i] * 
-							cos(tf2::getYaw(curr_pose.transform.rotation) + tf2::getYaw(laser_pose_.transform.rotation));
+							cos(theta + beam_angle);// + tf2::getYaw(laser_pose_.transform.rotation));
 			double y_z_kt = curr_pose.transform.translation.y +
-							laser_pose_.transform.translation.y * cos(tf2::getYaw(curr_pose.transform.rotation)) +
-							laser_pose_.transform.translation.x * sin(tf2::getYaw(curr_pose.transform.rotation)) +
+							laser_pose_.transform.translation.y * cos(theta) +
+							laser_pose_.transform.translation.x * sin(theta) +
 							scan->ranges[i] * 
-							sin(tf2::getYaw(curr_pose.transform.rotation) + tf2::getYaw(laser_pose_.transform.rotation));
-			int8_t end_point_index = MapUtils::coordinates_to_index(x_z_kt, y_z_kt, map_.info.width);
-			double dist_prob = pre_computed_likelihood_field_.at(end_point_index);
+							sin(theta + beam_angle);// + tf2::getYaw(laser_pose_.transform.rotation));
+			int end_point_index = MapUtils::coordinates_to_index(x_z_kt, y_z_kt, map_.info.width);
+			double dist_prob = pre_computed_likelihood_field_[end_point_index];
 
-			q *= z_hit_* dist_prob + (z_rand_/z_max_);
+			q *= (z_hit_* dist_prob + (z_rand_/z_max_));
 		}
 	}
 	return q;
