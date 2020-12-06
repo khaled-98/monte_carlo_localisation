@@ -27,14 +27,13 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
     double y = prev_pose.transform.translation.y;
     double theta = tf2::getYaw(prev_pose.transform.rotation);
 
-    double delta_rot_1;
-    if(hypot(x_bar_prime-x_bar, y_bar_prime-y_bar) > 0.01)
-        delta_rot_1 = MotionUtils::angleDiff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
-    else
+    double delta_rot_1 = MotionUtils::angleDiff(atan2(y_bar_prime-y_bar, x_bar_prime-x_bar), theta_bar);
+    
+    if(hypot(x_bar_prime-x_bar, y_bar_prime-y_bar) < 0.01)
         delta_rot_1 = 0.0;
 
-    double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);	
-    double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1); 
+    double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);
+    double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1);
     
     std::random_device device;	
     std::mt19937 generator(device());

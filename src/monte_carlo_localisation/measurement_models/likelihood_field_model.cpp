@@ -123,12 +123,12 @@ double LikelihoodFieldModel::getProbability(const sensor_msgs::LaserScan::ConstP
 							laser_pose_.transform.translation.x * cos(theta) -
 							laser_pose_.transform.translation.y * sin(theta) +
 							scan->ranges[i] * 
-							cos(theta + beam_angle);// + tf2::getYaw(laser_pose_.transform.rotation));
+							cos(theta + beam_angle + tf2::getYaw(laser_pose_.transform.rotation));
 			double y_z_kt = curr_pose.transform.translation.y +
 							laser_pose_.transform.translation.y * cos(theta) +
 							laser_pose_.transform.translation.x * sin(theta) +
 							scan->ranges[i] * 
-							sin(theta + beam_angle);// + tf2::getYaw(laser_pose_.transform.rotation));
+							sin(theta + beam_angle + tf2::getYaw(laser_pose_.transform.rotation));
 			int end_point_index = MapUtils::coordinates_to_index(x_z_kt, y_z_kt, map_.info.width);
 			double dist_prob = pre_computed_likelihood_field_[end_point_index];
 
