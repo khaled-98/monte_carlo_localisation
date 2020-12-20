@@ -44,7 +44,7 @@ void LikelihoodFieldModel::preComputeLikelihoodField()
 
     // Apply zero-mean norrmal distribution
 	for(auto index=0; index < map_.info.width*map_.info.height; index++)
-		pre_computed_likelihood_field_[index] = (1.0/(sqrt(2*M_PI)*sigma_hit_))*exp(-0.5*((pre_computed_likelihood_field_[index]*pre_computed_likelihood_field_[index])/(sigma_hit_*sigma_hit_)));
+		pre_computed_likelihood_field_[index] = (1.0/(sqrt(2.0*M_PI)*sigma_hit_))*exp(-0.5*(pow(pre_computed_likelihood_field_[index], 2)/pow(sigma_hit_, 2)));
 }
 
 void LikelihoodFieldModel::DFS(const int &index_curr,
@@ -114,16 +114,17 @@ double LikelihoodFieldModel::getProbability(const sensor_msgs::LaserScan::ConstP
 	// in case the user specfies more beams than is avaiable
 	int max_number_of_beams = std::min(max_number_of_beams_, static_cast<int>(scan->ranges.size()));
 	int beams_to_skip = static_cast<int>(scan->ranges.size())/max_number_of_beams;
-	for(int i=0; i<max_number_of_beams; i+=beams_to_skip)
+	for(int i=0; i<scan->ranges.size(); i+=beams_to_skip)
 	{
 		if(scan->ranges[i]<z_max_ && scan->ranges[i]>z_min_) // within sensor range
 		{
-			double beam_angle = scan->angle_min + scan->angle_increment*i;
+			double beam_angle = tf2::getYaw(laser_pose_.transform.rotation) + 
+								scan->angle_min + scan->angle_increment*i;
 			double x_z_kt = curr_pose.transform.translation.x +
 							laser_pose_.transform.translation.x * cos(theta) -
 							laser_pose_.transform.translation.y * sin(theta) +
 							scan->ranges[i] * 
-							cos(theta + beam_angle + tf2::getYaw(laser_pose_.transform.rotation));
+							cos(theta + beam_angle);
 			double y_z_kt = curr_pose.transform.translation.y +
 							laser_pose_.transform.translation.y * cos(theta) +
 							laser_pose_.transform.translation.x * sin(theta) +
