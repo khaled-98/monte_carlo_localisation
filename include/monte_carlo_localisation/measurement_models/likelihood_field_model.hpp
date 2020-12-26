@@ -22,7 +22,7 @@ private:
              const int &index_of_obstacle,
              std::vector<bool> &visited); //Deep First Search used in Likelihood field calculations.
 
-    std::unordered_map<int, double>	pre_computed_likelihood_field_;
+    std::unordered_map<int, double>	likelihood_field_dist_;
 	int max_number_of_beams_;       // The maximum number of laser beams to use in the calculations 
 	double max_likelihood_distance_; // The distance beyond which the likelihood is 0
 	// Model parameters
