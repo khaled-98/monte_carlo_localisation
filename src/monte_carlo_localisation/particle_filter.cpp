@@ -1,14 +1,19 @@
 #include "monte_carlo_localisation/particle_filter.hpp"
 #include "monte_carlo_localisation/motion_utils.hpp"
+#include "tf2/utils.h"
 #include <random>
 #include <unordered_set>
+#include <unordered_map>
+
 
 ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurement_model,
                                const std::shared_ptr<MotionModel> &motion_model,
+                               const SamplingMethod &sampling_method,
                                const ResamplingMethod &resampling_method) :
                                private_nh_("~"),
                                measurement_model_(measurement_model),
                                motion_model_(motion_model),
+                               sampling_method_(sampling_method),
                                resampling_method_(resampling_method),
                                w_slow_(0.0),
                                w_fast_(0.0)
@@ -16,12 +21,16 @@ ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurem
     double init_x, init_y, init_theta;
     int init_number_of_particles;
 
-    private_nh_.param("initial_number_of_particles", init_number_of_particles, 5000);
+    private_nh_.param("initial_number_of_particles", init_number_of_particles, 500);
+    private_nh_.param("min_number_of_particles", min_number_of_particles_, 100);
+    private_nh_.param("max_number_of_particles", max_number_of_particles_, 5000);
     private_nh_.param("init_x", init_x, 1.0);
     private_nh_.param("init_y", init_y, 1.0);
     private_nh_.param("init_theta", init_theta, 0.0);
     private_nh_.param("alpha_slow", alpha_slow_, 0.001);
     private_nh_.param("alpha_fast", alpha_fast_, 0.1);
+    private_nh_.param("kld_error", kld_error_, 0.05);
+    private_nh_.param("kld_z", kld_z_, 0.99);
     
     geometry_msgs::TransformStamped initial_pose;
     initial_pose.transform.translation.x = init_x;
@@ -45,7 +54,7 @@ void ParticleFilter::initialiseFilter(const geometry_msgs::TransformStamped &ini
 
     // TODO:: implement fluctuations in the angle as well
     std::default_random_engine generator;
-    std::normal_distribution<double> rand_distribution(0.0, 0.5);    // mean of 0.0 and std of 0.5
+    std::normal_distribution<double> rand_distribution(0.0, 0.1);    // mean of 0.0 and std of 0.5
 
     for(int i=0; i<number_of_particles; i++)
     {
@@ -70,16 +79,57 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
                             const geometry_msgs::TransformStamped &curr_odom,
                             const sensor_msgs::LaserScan::ConstPtr &scan)
 {
-    particles_t_.clear();   // clear current set of particles
+    sum_of_weights_ = 0;
+    std::vector<Particle> particles_t_bar = sample(prev_odom, curr_odom, scan);
+
+    // Normalise weights
+    double highest_weight_found{0.0};
+    for(auto particle : particles_t_bar)
+    {
+        particle.weight_ /= sum_of_weights_;
+        if(particle.weight_ > highest_weight_found)
+        {
+            highest_weight_found = particle.weight_;
+            most_likely_pose_ = particle.pose_;
+        }
+    }
+
+    if(sampling_method_ == SamplingMethod::KLD)
+        particles_t_ = particles_t_bar;
+    else
+        particles_t_ = resample(particles_t_bar);
+    particles_t_1_ = particles_t_;
+}
+
+std::vector<Particle> ParticleFilter::sample(const geometry_msgs::TransformStamped &prev_odom,
+                                             const geometry_msgs::TransformStamped &curr_odom,
+                                             const sensor_msgs::LaserScan::ConstPtr &scan)
+{
+    switch (sampling_method_)
+    {
+        case SamplingMethod::DEFAULT:
+            return defaultSample(prev_odom, curr_odom, scan);
+        case SamplingMethod::KLD:
+            return kldSample(prev_odom, curr_odom, scan);
+        default:
+            throw std::runtime_error("This sampling method is not implemented.");
+    }
+}
+
+std::vector<Particle> ParticleFilter::defaultSample(const geometry_msgs::TransformStamped &prev_odom,
+                                                    const geometry_msgs::TransformStamped &curr_odom,
+                                                    const sensor_msgs::LaserScan::ConstPtr &scan)
+{
     std::vector<Particle> particles_t_bar;
-
-    double sum_of_weights {0};
-    double w_avg = 0.0;
-
+    double w_avg = 0; // for augemented resampling
     for(int i=0; i<particles_t_1_.size(); i++)
     {
-        particles_t_bar.push_back(sample(particles_t_1_[i], prev_odom, curr_odom, scan));
-        sum_of_weights += particles_t_bar.back().weight_;
+        geometry_msgs::TransformStamped most_likely_pose = 
+                motion_model_->getMostLikelyPose(particles_t_1_[i].pose_, prev_odom, curr_odom);
+        double weight = measurement_model_->getProbability(scan, most_likely_pose);
+        particles_t_bar.push_back({most_likely_pose, weight});
+        sum_of_weights_ += weight;
+
         if(resampling_method_ == ResamplingMethod::AUGMENTED)
             w_avg += particles_t_bar.back().weight_;
     }
@@ -91,29 +141,56 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
         w_fast_ += alpha_fast_*(w_avg - w_fast_);
     }
 
-    double highest_weight_found{0.0};
-    // Normalise weights
-    for(auto particle : particles_t_bar)
-    {
-        particle.weight_ /= sum_of_weights;
-        if(particle.weight_ > highest_weight_found)
-        {
-            highest_weight_found = particle.weight_;
-            most_likely_pose_ = particle.pose_;
-        }
-    }
-    particles_t_ = resample(particles_t_bar);
-    particles_t_1_ = particles_t_;
+    return particles_t_bar;
 }
 
-Particle ParticleFilter::sample(const Particle &x_t_1,
-                                const geometry_msgs::TransformStamped &prev_odom,
-                                const geometry_msgs::TransformStamped &curr_odom,
-                                const sensor_msgs::LaserScan::ConstPtr &scan)
+std::vector<Particle> ParticleFilter::kldSample(const geometry_msgs::TransformStamped &prev_odom,
+                                                const geometry_msgs::TransformStamped &curr_odom,
+                                                const sensor_msgs::LaserScan::ConstPtr &scan)
 {
-    geometry_msgs::TransformStamped most_likely_pose = motion_model_->getMostLikelyPose(x_t_1.pose_, prev_odom, curr_odom);
-    double weight = measurement_model_->getProbability(scan, most_likely_pose);
-    return Particle(most_likely_pose, weight);
+    std::vector<Particle> x_t;
+    int M = 0;
+    int M_x = 0;
+    int k = 0;
+    std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, int>>> grid;
+
+    // extract all the weights into a vector
+    std::vector<double> weights;
+    for(auto particle : particles_t_1_)
+        weights.push_back(particle.weight_);
+
+    // Make a proobabiilty distribution
+    std::default_random_engine generator;
+    std::discrete_distribution<int> weights_dist(weights.begin(), weights.end());
+
+    do
+    {
+        int drawn_particle_index = weights_dist(generator);
+        geometry_msgs::TransformStamped most_likely_pose = 
+                motion_model_->getMostLikelyPose(particles_t_1_[drawn_particle_index].pose_, prev_odom, curr_odom);
+        double weight = measurement_model_->getProbability(scan, most_likely_pose);
+        sum_of_weights_ += weight;
+        x_t.push_back({most_likely_pose, weight});
+
+        // KLD stuff
+        int grid_x = floor(most_likely_pose.transform.translation.x / 0.5);
+        int grid_y = floor(most_likely_pose.transform.translation.y / 0.5);
+        int grid_z = floor(tf2::getYaw(most_likely_pose.transform.rotation) / 0.17453); // 10 deg
+        if(grid[grid_x][grid_y][grid_z]==0)
+        {
+            k++;
+            grid[grid_x][grid_y][grid_z]++;
+            if(k > 1)
+            {
+                double a = 1.0;
+                double b = 2.0 / (9.0*((double)k - 1.0));
+                double c = sqrt(2.0 / (9.0 * ((double)k - 1.0))) * kld_z_;
+                M_x = ((k-1)/(2.0*kld_error_))*pow(a-b+c, 3);
+            }
+        }
+        M++;
+    } while ((M < M_x || M < min_number_of_particles_) && M < max_number_of_particles_);
+    return x_t;
 }
 
 std::vector<Particle> ParticleFilter::resample(const std::vector<Particle> &x_t_bar)
@@ -146,11 +223,7 @@ std::vector<Particle> ParticleFilter::defaultResample(const std::vector<Particle
     for(int i=0; i<x_t_bar.size(); i++)
     {
         int drawn_particle_index = weights_dist(generator);
-        if(indices_to_be_added.find(drawn_particle_index)==indices_to_be_added.end())
-        {
-            x_t.push_back(x_t_bar[drawn_particle_index]);
-            indices_to_be_added.insert(drawn_particle_index);
-        }
+        x_t.push_back(x_t_bar[drawn_particle_index]);
     }
 
     return x_t;
