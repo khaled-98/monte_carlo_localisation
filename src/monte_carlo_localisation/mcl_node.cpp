@@ -2,7 +2,7 @@
 #include "monte_carlo_localisation/motion_utils.hpp"
 #include "nav_msgs/GetMap.h"
 
-MclNode::MclNode()
+MclNode::MclNode() : private_nh_("~")
 {
     private_nh_.param("odom_frame_id", odom_frame_id_, std::string("odom"));
     private_nh_.param("base_frame_id", base_frame_id_, std::string("base_link"));
