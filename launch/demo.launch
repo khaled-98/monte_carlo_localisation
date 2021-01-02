@@ -27,9 +27,6 @@
           args="-d $(find turtlebot3_navigation)/rviz/turtlebot3_navigation.rviz"/>
   </group>
 
-  <!-- Run the Perfect Localiser -->
-  <node pkg="final_year_project" type="perfect_localiser.py" name="perfect_localiser"/>
-
   <!-- mcl -->
   <node pkg="monte_carlo_localisation" type="monte_carlo_localisation_node" name="monte_carlo_localisation_node" output="screen">
     <param name="init_x" value="-2.0"/>
