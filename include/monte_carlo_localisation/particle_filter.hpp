@@ -30,6 +30,7 @@ public:
     void update(const geometry_msgs::TransformStamped &prev_odom,
                 const geometry_msgs::TransformStamped &curr_odom,
                 const sensor_msgs::LaserScan::ConstPtr &scan);
+    geometry_msgs::TransformStamped getMostLikelyPose();
 
 private:
     std::vector<Particle> sample(const geometry_msgs::TransformStamped &prev_odom,
@@ -45,6 +46,7 @@ private:
     std::vector<Particle> resample(const std::vector<Particle> &x_t_bar);
     std::vector<Particle> defaultResample(const std::vector<Particle> &x_t_bar);
     std::vector<Particle> augmentedResample(const std::vector<Particle> &x_t_bar);
+    void updateStats();
     
     ros::NodeHandle nh_, private_nh_;
     std::shared_ptr<MeasurementModel> measurement_model_;

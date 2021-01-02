@@ -99,6 +99,8 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
     else
         particles_t_ = resample(particles_t_bar);
     particles_t_1_ = particles_t_;
+
+    updateStats();
 }
 
 std::vector<Particle> ParticleFilter::sample(const geometry_msgs::TransformStamped &prev_odom,
@@ -288,4 +290,32 @@ geometry_msgs::PoseArray ParticleFilter::getPoses() const
         poses.poses.push_back(pose);
     }
     return poses;
+}
+
+void ParticleFilter::updateStats()
+{
+    // TODO: Calculate covariance
+    double mean_x=0.0, mean_y=0.0, mean_theta_cs=0.0, mean_theta_sn=0.0, total_weight=0.0;
+    for(auto p : particles_t_)
+    {
+        total_weight += p.weight_;
+        mean_x += p.pose_.transform.translation.x * p.weight_;
+        mean_y += p.pose_.transform.translation.y * p.weight_;
+        double angle = tf2::getYaw(p.pose_.transform.rotation);
+        mean_theta_cs += cos(angle) * p.weight_;
+        mean_theta_sn += sin(angle) * p.weight_;
+    }
+
+    mean_x /= total_weight;
+    mean_y /= total_weight;
+    double mean_theta = atan2(mean_theta_sn, mean_theta_cs);
+    
+    most_likely_pose_.transform.translation.x = mean_x;
+    most_likely_pose_.transform.translation.y = mean_y;
+    most_likely_pose_.transform.rotation = MotionUtils::getQuat(mean_theta);
+}
+
+geometry_msgs::TransformStamped ParticleFilter::getMostLikelyPose()
+{
+    return most_likely_pose_;
 }
