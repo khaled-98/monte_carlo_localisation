@@ -9,10 +9,9 @@ In addition to the "vanilla" MCL algorithm, this code also implementes:
 
 > :warning: **_NOTE:_**  Basic testing of this implementation shows that it works; however, it was written primarily as a learning excercise. As a result, there are several areas where the code can be improved.
 
-<figure align="center">
+<p align="center">
   <img width="500" height="505" src="demo.gif">
-  <figcaption>A demo of the default configuration.</figcaption>
-</figure>
+</p>
 
 
 ## Background
