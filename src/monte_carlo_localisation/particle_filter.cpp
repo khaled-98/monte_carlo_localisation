@@ -83,17 +83,9 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
     std::vector<Particle> particles_t_bar = sample(prev_odom, curr_odom, scan);
 
     // Normalise weights
-    double highest_weight_found{0.0};
     for(auto particle : particles_t_bar)
-    {
         particle.weight_ /= sum_of_weights_;
-        if(particle.weight_ > highest_weight_found)
-        {
-            highest_weight_found = particle.weight_;
-            most_likely_pose_ = particle.pose_;
-        }
-    }
-
+        
     if(sampling_method_ == SamplingMethod::KLD)
         particles_t_ = particles_t_bar;
     else
@@ -124,10 +116,10 @@ std::vector<Particle> ParticleFilter::defaultSample(const geometry_msgs::Transfo
 {
     std::vector<Particle> particles_t_bar;
     double w_avg = 0; // for augemented resampling
-    for(int i=0; i<particles_t_1_.size(); i++)
+    for(auto p : particles_t_1_)
     {
         geometry_msgs::TransformStamped most_likely_pose = 
-                motion_model_->getMostLikelyPose(particles_t_1_[i].pose_, prev_odom, curr_odom);
+                motion_model_->getMostLikelyPose(p.pose_, prev_odom, curr_odom);
         double weight = measurement_model_->getProbability(scan, most_likely_pose);
         particles_t_bar.push_back({most_likely_pose, weight});
         sum_of_weights_ += weight;

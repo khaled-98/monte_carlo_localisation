@@ -30,7 +30,7 @@ bool MotionUtils::hasMoved(const geometry_msgs::TransformStamped &start,
     double x_prime = end.transform.translation.x;
     double y_prime = end.transform.translation.y;
     
-    double translation = sqrt(pow(x_prime-x, 2) + pow(y_prime-y, 2));
+    double translation = hypot(x_prime-x, y_prime-y);
     double rotation = abs(angleDiff(theta_prime, theta));
 
     if(translation > trans_tol || rotation > rot_tol)
