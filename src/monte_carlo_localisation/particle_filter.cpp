@@ -79,7 +79,7 @@ void ParticleFilter::update(const geometry_msgs::TransformStamped &prev_odom,
                             const geometry_msgs::TransformStamped &curr_odom,
                             const sensor_msgs::LaserScan::ConstPtr &scan)
 {
-    sum_of_weights_ = 0;
+    sum_of_weights_ = 0.0;
     std::vector<Particle> particles_t_bar = sample(prev_odom, curr_odom, scan);
 
     // Normalise weights

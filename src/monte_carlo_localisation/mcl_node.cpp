@@ -9,8 +9,8 @@ MclNode::MclNode() : private_nh_("~")
     private_nh_.param("base_frame_id", base_frame_id_, std::string("base_link"));
     private_nh_.param("global_frame_id", global_frame_id_, std::string("map"));
     private_nh_.param("laser_topic", laser_topic_, std::string("base_scan"));
-    private_nh_.param("linear_tol", linear_tol_, 0.1);
-    private_nh_.param("angular_tol", angular_tol_, 0.087);  // ~ 5deg in rads
+    private_nh_.param("linear_tol", linear_tol_, 0.05);
+    private_nh_.param("angular_tol", angular_tol_, 0.05);
 
     particle_cloud_pub_ = nh_.advertise<geometry_msgs::PoseArray>("particlecloud", 100);
     
