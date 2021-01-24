@@ -8,10 +8,10 @@
 class MapUtils
 {
 public:
-    static int map_coordinates_to_index(const double &x, const double &y, const uint32_t &map_width);
-    static std::pair<int, int> world_coord_to_map_coord(const double &x, const double &y, const nav_msgs::MapMetaData &map_info);
-    static std::pair<uint32_t, uint32_t> map_index_to_coordinates(const int &index, const uint32_t &map_width);
-    static double distance_between_two_points(const int &x1, const int &y1,
+    static int mapCoordToIndex(const double &x, const double &y, const uint32_t &map_width);
+    static std::pair<int, int> worldToMapCoord(const double &x, const double &y, const nav_msgs::MapMetaData &map_info);
+    static std::pair<uint32_t, uint32_t> mapIndexToCoord(const int &index, const uint32_t &map_width);
+    static double distanceBetweenTwoPoints(const int &x1, const int &y1,
                                               const int &x2, const int &y2);
 };
 

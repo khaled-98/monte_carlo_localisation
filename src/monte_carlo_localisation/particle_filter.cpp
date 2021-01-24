@@ -40,13 +40,6 @@ ParticleFilter::ParticleFilter(const std::shared_ptr<MeasurementModel> &measurem
     initialiseFilter(initial_pose, init_number_of_particles);
 }
 
-/**
- * Initialises the particle filter by adding particles that are normally distributed 
- * around the given pose, to avoid having all the particles at the same point.
- * 
- * @param init_pose The approximate pose to which the filter should be initialised
- * @param number_of_particles The number of particles to initialise the filter with.
- */
 void ParticleFilter::initialiseFilter(const geometry_msgs::TransformStamped &init_pose,
                                       const int &number_of_particles)
 {
@@ -54,7 +47,7 @@ void ParticleFilter::initialiseFilter(const geometry_msgs::TransformStamped &ini
 
     // TODO:: implement fluctuations in the angle as well
     std::default_random_engine generator;
-    std::normal_distribution<double> rand_distribution(0.0, 0.1);    // mean of 0.0 and std of 0.5
+    std::normal_distribution<double> rand_distribution(0.0, 0.1);
 
     for(int i=0; i<number_of_particles; i++)
     {
@@ -65,7 +58,7 @@ void ParticleFilter::initialiseFilter(const geometry_msgs::TransformStamped &ini
         pose.transform.translation.x = init_pose.transform.translation.x + delta_x;
         pose.transform.translation.y = init_pose.transform.translation.y + delta_y;
         pose.transform.rotation = init_pose.transform.rotation;
-        particles_t_1_.push_back(Particle(pose, 1.0));  // arbitrarily assing a weight of 1.0
+        particles_t_1_.push_back(Particle(pose, 1.0));  // arbitrarily assign a weight of 1.0
     }
     particles_t_ = particles_t_1_;
 }

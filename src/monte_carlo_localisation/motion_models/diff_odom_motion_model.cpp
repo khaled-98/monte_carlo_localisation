@@ -35,6 +35,7 @@ geometry_msgs::TransformStamped DiffOdomMotionModel::getMostLikelyPose(const geo
     double delta_trans = hypot(x_bar_prime-x_bar, y_bar_prime-y_bar);
     double delta_rot_2 = MotionUtils::angleDiff(MotionUtils::angleDiff(theta_bar_prime, theta_bar), delta_rot_1);
     
+    // Treat forward and backward motion the same way
     double delta_rot_1_noise = std::min(fabs(MotionUtils::angleDiff(delta_rot_1, 0.0)),
                                         fabs(MotionUtils::angleDiff(delta_rot_1, M_PI)));
     double delta_rot_2_noise = std::min(fabs(MotionUtils::angleDiff(delta_rot_2, 0.0)),
